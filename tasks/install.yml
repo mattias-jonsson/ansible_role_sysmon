@@ -1,0 +1,42 @@
+---
+
+- name: Create a temporary directory for download.
+  ansible.windows.win_tempfile:
+    state: directory
+  register: sysmon_dl_temp
+
+- name: Download Sysmon installer.
+  ansible.windows.win_get_url:
+    checksum_algorithm: sha256
+    checksum: "{{ sysmon_sha256sum }}"
+    url: '{{ sysmon_installer }}'
+    validate_certs: true
+    dest: '{{ sysmon_dl_temp.path }}'
+  retries: 10
+  delay: 10
+
+- name: Unzip Sysmon installer files.
+  community.windows.win_unzip:
+    src: '{{ sysmon_dl_temp.path }}\Sysmon.zip'
+    dest: '{{ sysmon_dl_temp.path }}'
+
+- name: Uninstall installed version of Sysmon.
+  become: true
+  ansible.windows.win_command:
+    cmd: 'C:\Windows\Sysmon64.exe -u force'
+  register: sysmon_service_uninstall
+  when: |
+    sysmon64_service_check.exists and sysmon64exe_version.win_file_version.product_version | default('1.0') != sysmon_install_version or
+    sysmon64_service_check.exists and not sysmon64exe_stat.results | selectattr('stat.exists', 'equalto', true) | list | length == 2
+
+- name: Install Sysmon.
+  become: true
+  ansible.windows.win_command:
+    cmd: '{{ sysmon_dl_temp.path }}\Sysmon64.exe {{ sysmon_install_default_parameters | join(" ") }}'
+    chdir: '{{ sysmon_dl_temp.path }}'
+  register: sysmon_service_install
+
+- name: Remove temporary directory
+  ansible.windows.win_file:
+    path: '{{ sysmon_dl_temp.path }}'
+    state: absent

@@ -1,0 +1,35 @@
+---
+
+- name: Assert that role is executed on a supported Operating System
+  ansible.builtin.assert:
+    that: >
+      ansible_distribution is search("Microsoft Windows Server 2016") or
+      ansible_distribution is search("Microsoft Windows Server 2019") or
+      ansible_distribution is search("Microsoft Windows Server 2022") or
+      ansible_distribution is search("Microsoft Windows 10") or
+      ansible_distribution is search("Microsoft Windows 11")
+    msg: "{{ ansible_distribution }} is not a supported Operating System for this role."
+
+- name: Check is Sysmon service is installed.
+  ansible.windows.win_service:
+    name: Sysmon64
+  changed_when: false
+  register: sysmon64_service_check
+
+- name: Include check tasks.
+  ansible.builtin.include_tasks:
+    file: check.yml
+  when: sysmon64_service_check.exists
+
+- name: Include install tasks.
+  ansible.builtin.include_tasks:
+    file: install.yml
+  when: |
+    not sysmon64_service_check.exists or
+    sysmon64exe_version.win_file_version.product_version | default('1.0') != sysmon_install_version or
+    sysmon64_service_check.exists and not sysmon64exe_stat.results | selectattr('stat.exists', 'equalto', true) | list | length == 2
+
+- name: Include configure tasks.
+  ansible.builtin.include_tasks:
+    file: configure.yml
+  when: sysmon64_service_check.exists or sysmon_service_install.changed

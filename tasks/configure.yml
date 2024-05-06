@@ -1,0 +1,42 @@
+---
+
+- name: Configure Sysmon Operational EventLog.
+  become: true
+  ansible.windows.win_command: >
+    wevtutil sl Microsoft-Windows-Sysmon/Operational
+    /ms:{{ sysmon_eventlog_maxsize_gigabyte | int * 1024 * 1024 * 1024 }} /rt:false /ab:false
+  when: (sysmonevtlog_reg_parameters.value | default(0)) | int != (sysmon_eventlog_maxsize_gigabyte | int * 1024 * 1024 * 1024)
+
+- name: Update configuration file.
+  become: true
+  ansible.windows.win_copy:
+    content: '{{ sysmon_config_xml_data }}'
+    dest: '{{ sysmon_config_file }}'
+    backup: true
+  register: sysmon_configfile_update
+
+- name: Reload Sysmon with new config.
+  become: true
+  ansible.windows.win_command:
+    cmd: 'C:\Windows\Sysmon64.exe -c {{ sysmon_config_file }}'
+  register: sysmon_config_reload
+  failed_when: false
+  when: |
+    sysmon_configfile_update.changed or
+    sysmondrv_reg_parameters.value is defined and sysmondrv_reg_parameters.value != sysmon_config_file
+
+- name: Include config revert tasks.
+  ansible.builtin.include_tasks:
+    file: revert_config.yml
+  when:
+    - sysmon_config_reload.rc | default(0) != 0
+    - sysmondrv_reg_parameters.value == sysmon_config_file
+
+- name: Assert that the new Sysmon config is installed.
+  ansible.builtin.assert:
+    that: |
+      sysmon_config_reload.rc is defined and sysmon_config_reload.rc == 0 or
+      sysmon_service_revert.rc is defined and sysmon_service_revert.rc != 0
+    msg: "The new configuration file was incorrect, Sysmon has NOT been updated with a new configuration!"
+    quiet: true
+  when: sysmon_configfile_update.changed

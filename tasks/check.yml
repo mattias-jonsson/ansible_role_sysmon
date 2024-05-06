@@ -1,0 +1,34 @@
+---
+
+- name: Check if Sysmon binary exists.
+  ansible.windows.win_stat:
+    path: '{{ item }}'
+  changed_when: false
+  loop:
+    - 'C:\Windows\Sysmon64.exe'
+    - 'C:\Windows\SysmonDrv.sys'
+  register: sysmon64exe_stat
+
+- name: Check Sysmon version.
+  community.windows.win_file_version:
+    path: C:\Windows\Sysmon64.exe
+  register: sysmon64exe_version
+  when: sysmon64exe_stat.results[0].stat.exists
+
+- name: Get registry info for SysmonDrv
+  ansible.windows.win_reg_stat:
+    path: HKLM:\SYSTEM\CurrentControlSet\Services\SysmonDrv\Parameters
+    name: ConfigFile
+  register: sysmondrv_reg_parameters
+  when:
+    - sysmon64_service_check.exists
+    - sysmon64_service_check.state | lower == "running"
+
+- name: Get registry info for Sysmon Operational EventLog Maxsize
+  ansible.windows.win_reg_stat:
+    path: HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\WINEVT\Channels\Microsoft-Windows-Sysmon/Operational
+    name: MaxSize
+  register: sysmonevtlog_reg_parameters
+  when:
+    - sysmon64_service_check.exists
+    - sysmon64_service_check.state | lower == "running"
