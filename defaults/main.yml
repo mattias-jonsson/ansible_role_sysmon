@@ -2,9 +2,9 @@
 
 sysmon_config_file: "C:\\Users\\vagrant\\Downloads\\sysmonconfig-export.xml"
 sysmon_eventlog_maxsize_gigabyte: 1
-sysmon_sha256sum: 900a7bbf67b3c0e0c2109e3fb14a534a90f55f326d625a332bdd3c7d95d44c04
-sysmon_installer: https://download.sysinternals.com/files/Sysmon.zip
-sysmon_install_version: '15.14'
+sysmon_installer_sha256sum: 900a7bbf67b3c0e0c2109e3fb14a534a90f55f326d625a332bdd3c7d95d44c04
+sysmon_installer_url: https://download.sysinternals.com/files/Sysmon.zip
+sysmon_installer_version: '15.14'
 sysmon_config_xml_data: |
   <!--
     sysmon-config | A Sysmon configuration focused on default high-quality event tracing and easy customization by the community

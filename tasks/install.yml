@@ -8,8 +8,8 @@
 - name: Download Sysmon installer.
   ansible.windows.win_get_url:
     checksum_algorithm: sha256
-    checksum: "{{ sysmon_sha256sum }}"
-    url: '{{ sysmon_installer }}'
+    checksum: "{{ sysmon_installer_sha256sum }}"
+    url: '{{ sysmon_installer_url }}'
     validate_certs: true
     dest: '{{ sysmon_dl_temp.path }}'
   retries: 10
@@ -26,7 +26,7 @@
     cmd: 'C:\Windows\Sysmon64.exe -u force'
   register: sysmon_service_uninstall
   when: |
-    sysmon64_service_check.exists and sysmon64exe_version.win_file_version.product_version | default('1.0') != sysmon_install_version or
+    sysmon64_service_check.exists and sysmon64exe_version.win_file_version.product_version | default('1.0') != sysmon_installer_version or
     sysmon64_service_check.exists and not sysmon64exe_stat.results | selectattr('stat.exists', 'equalto', true) | list | length == 2
 
 - name: Install Sysmon.
