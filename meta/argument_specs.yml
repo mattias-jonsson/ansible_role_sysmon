@@ -1,0 +1,43 @@
+---
+
+argument_specs:
+  main:
+    short_description: |
+      This Ansible role installs, upgrades, and configures VMware Tools on
+      Windows Server (2016, 2019, and 2022), Windows 10 and Windows 11.
+    options:
+      sysmon_config_file:
+        type: str
+        required: false
+        default: 'C:\\Windows\\sysmonconfig.xml'
+        description: Location of the Sysmon configuration file.
+      sysmon_eventlog_maxsize_gigabyte:
+        type: int
+        required: false
+        default: 1
+        description: |
+          Maximum capacity of the Sysmon operational log in gigabytes (GB).
+          This parameter defines the log’s storage limit before it automatically overwrites the oldest events.
+          Sysmon logs are stored in the Windows Event Log at Applications and Services Logs/Microsoft/Windows/Sysmon/Operational.
+      sysmon_installer_sha256sum:
+        type: str
+        required: false
+        default: '900a7bbf67b3c0e0c2109e3fb14a534a90f55f326d625a332bdd3c7d95d44c04'
+        description: SHA256 checksum for the Sysmon.zip installer.
+      sysmon_installer_url:
+        type: str
+        required: false
+        default: 'https://download.sysinternals.com/files/Sysmon.zip'
+        description: URL to the Sysmon.zip installer archive.
+      sysmon_installer_version:
+        type: str
+        required: false
+        default: '15.14'
+        description: Version of Sysmon to install.
+      sysmon_config_xml_data:
+        type: str
+        required: false
+        default: 'See defaults/main.yml'
+        description: |
+          XML data for Sysmon configuration. The default value uses the SwiftOnSecurity Sysmon config,
+          available at https://github.com/SwiftOnSecurity/sysmon-config.
